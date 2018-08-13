@@ -17,36 +17,38 @@
     - setup:
       register: local_facts
     - set_fact:
-        fact1: this is a fact
-        fact2: this is another fact
+        fact1: this is a custom fact
+        fact2: this is another custom fact
   tasks:
-    - name: "Write all facts to /tmp/local_facts"
-      copy:
-        content: "{{ local_facts }}"
-        dest: /tmp/local_facts
+#    - name: "Write all facts to /tmp/local_facts"
+#      copy:
+#        content: "{{ local_facts }}"
+#        dest: /tmp/local_facts
 
     - debug:
         msg: "Today's date: {{ local_facts.ansible_facts.ansible_date_time.date }}"
 
     - debug:
         msg: "Run by user: {{ lookup('env','USER') }}"
-        verbosity: 2
 
-    - name: show some facts
+    - name: Show some facts
       debug:
         msg: "{{ fact1 }} and {{ fact2 }}"
 
-    - debug:
+    - name: Test if number is even or odd
+      debug:
         msg: "ID is an {{ 'even' if (id |int is divisibleby 2) else 'odd' }} number"
 
-    - debug:
+    - name: Regex test
+      debug:
         msg: "foo var contains a number: {{ foo | regex_search('[0-9]+') }} "
 
-    - debug:
+    - name: Test that a variable is defined and not empty
+      debug:
         msg: "The variable bar was defined and it is not empty"
       when: not ((bar is undefined) or (bar is none) or (bar | trim == ''))
 
-    - name: Shows bar value or a default value if it is not defined
+    - name: Shows variable's value or a default value if it is not defined
       debug:
         msg: "Bar = {{ bar | default(5) }}"
 
@@ -55,17 +57,20 @@
         msg: "Here's my secret password: password123"
       no_log: true
 
-    - debug:
+    - name: Simple loop
+      debug:
         msg: "[LOOP] task #{{ item }}"
       with_items: [1,2,3,4,5]
 
-    - debug:
+    - name: Loop two lists together
+      debug:
         msg: "[LOOP TOGETHER] Letter {{ item.0 }} goes with number {{ item.1 }}"
       with_together:
         - [ A, B, C ]
         - [ 1, 2, 3 ]
 
-    - debug:
+    - name: Nested loop!
+      debug:
         msg: "[NESTED LOOP] Letter {{ item.0 }} also goes with {{ item.1 }}"
       with_nested:
         - [ A, B ]
@@ -81,7 +86,8 @@
       retries: 3
       ignore_errors: yes
 
-    - debug:
+    - name: Test if previous task failed
+      debug:
         msg: "Did not get an even number after 3 retries"
       when: result.failed == true
 
@@ -94,17 +100,28 @@
         - "press the red button"
         - "do nothing"
 
-    - name: Create a dictionary with two lists
+    - name: Create a simple dictionary
       set_fact:
-        obj:
+        my_dict:
+          name: "Nobody"
+          number: "zero"
+          address: "Nowhere"
+
+    - name: Debug a var
+      debug:
+        var: my_dict
+
+    - name: Create a more complex dictionary with two lists inside
+      set_fact:
+        dict_of_lists:
           numbers: "{{ list_one }}"
           letters: "{{ list_two }}"
     - debug:
-        msg: "A dictionary of letters and numbers: {{ obj }}"
+        msg: "A dictionary of letters and numbers: {{ dict_of_lists }}"
     - debug:
-        msg: "Only the letters: {{ obj.letters }}"
+        msg: "Only the letters: {{ dict_of_lists.letters }}"
     - debug:
-        msg: "The letter corresponding to {{ obj.numbers[0] }} is {{ obj.letters[0] }}"
+        msg: "The letter corresponding to {{ dict_of_lists.numbers[0] }} is {{ dict_of_lists.letters[0] }}"
 
     - name: Append lists
       set_fact:
@@ -114,19 +131,18 @@
       debug:
         msg: "A big list with letters and numbers: {{ lists_merged }}"
         
-    - name: create list of dictionaries
+    - name: Initialize a list of dictionaries
       set_fact:
         list_of_dict: []
+
+    - name: Build a list of dictionaries
       set_fact:
         list_of_dict: "{{ list_of_dict }} + {{[ {'number': item.0} | combine( {'letter': item.1} ) ]}}"
       with_together:
         - "{{ list_one }}"
         - "{{ list_two }}"
-        
-    - name: show list of dictionaries
-      debug:
-        msg: "{{ list_of_dict }}"
-    - name: iterate through list of dictionaries
+
+    - name: Iterate through list of dictionaries
       debug:
         msg: "{{ item.letter }} -> {{ item.number }}"
       with_items: " {{ list_of_dict }}"

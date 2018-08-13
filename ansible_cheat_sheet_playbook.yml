@@ -113,3 +113,21 @@
     - name: Show results
       debug:
         msg: "A big list with letters and numbers: {{ lists_merged }}"
+        
+    - name: create list of dictionaries
+      set_fact:
+        list_of_dict: [{}]
+      set_fact:
+        list_of_dict: "{{ list_of_dict }} + {{[ {'number': item.0} | combine( {'letter': item.1} ) ]}}"
+      with_together:
+        - "{{ list_one }}"
+        - "{{ list_two }}"
+        
+    - name: show list of dictionaries
+      debug:
+        msg: "{{ list_of_dict }}"
+    - name: iterate through list of dictionaries
+      debug:
+        msg: "{{ item.letter }} -> {{ item.number }}"
+      with_items: " {{ list_of_dict }}"
+      when: item.letter is defined
